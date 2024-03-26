@@ -1,8 +1,6 @@
 package com.pet.server.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +15,9 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 public class User {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String email;
     private String password;
@@ -27,4 +27,5 @@ public class User {
     private boolean isAdmin;
     @OneToMany(mappedBy = "user")
     private List<Pet> pets;
+
 }

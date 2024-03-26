@@ -1,8 +1,6 @@
 package com.pet.server.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
@@ -15,6 +13,7 @@ import java.util.List;
 public class Food {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
     private String manufacturer;
