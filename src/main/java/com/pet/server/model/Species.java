@@ -9,8 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,7 +24,7 @@ public class Species {
     private double heightFrom;
     private double heightTo;
     private double weight;
-    private LocalDate feedingRate;
+    private int feedingRate;
     private short furColor;
     private int lifeExpectancy;
 
