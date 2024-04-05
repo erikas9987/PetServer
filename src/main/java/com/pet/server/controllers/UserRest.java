@@ -8,6 +8,7 @@ import com.pet.server.utils.EmailChecker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -42,8 +43,8 @@ public class UserRest {
         if (!EmailChecker.matches(email)) {
             return new ResponseEntity<>("Bad email provided.", HttpStatus.BAD_REQUEST);
         }
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
+        Optional<User> user = userRepository.findByEmail(email);
+        if (user.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } else {
             return new ResponseEntity<>(user, HttpStatus.OK);
@@ -90,6 +91,7 @@ public class UserRest {
     }
 
     @PatchMapping(value = "/user/{id}")
+    @PreAuthorize("@userAuthorizationService.isAuthorizedUser(#id)")
     public ResponseEntity<?> updateUser(@PathVariable int id, @RequestBody User user) {
         Optional<User> optionalUser = userRepository.findById(id);
         if (optionalUser.isEmpty()) {
@@ -111,18 +113,24 @@ public class UserRest {
             return ResponseEntity.badRequest()
                     .body("User does not meet minimum age criteria");
         }
-        User foundUser = optionalUser.get();
-        foundUser.setEmail(user.getEmail());
-        foundUser.setPassword(user.getPassword());
-        foundUser.setBirthDate(user.getBirthDate());
-        if (user.getFirstName() != null) {
-            foundUser.setFirstName(user.getFirstName());
-        }
-        if (user.getLastName() != null) {
-            foundUser.setLastName(user.getLastName());
-        }
+        final User foundUser = updateUser(user, optionalUser);
         User savedUser = userRepository.saveAndFlush(foundUser);
         return new ResponseEntity<>(savedUser, HttpStatus.OK);
+    }
+
+    private static User updateUser(User user, Optional<User> optionalUser) {
+        User foundUser = optionalUser.get();
+        if (user.getEmail() != null)
+            foundUser.setEmail(user.getEmail());
+        if (user.getPassword() != null)
+            foundUser.setPassword(user.getPassword());
+        if (user.getBirthDate() != null)
+            foundUser.setBirthDate(user.getBirthDate());
+        if (user.getFirstName() != null)
+            foundUser.setFirstName(user.getFirstName());
+        if (user.getLastName() != null)
+            foundUser.setLastName(user.getLastName());
+        return foundUser;
     }
 
     @DeleteMapping(value = "/user/{id}")
