@@ -1,9 +1,12 @@
 package com.pet.server.errors;
 
-public class PetNotFoundException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+public class PetNotFoundException extends ResponseStatusException {
 
     public PetNotFoundException(int id) {
-        super("Pet not found by id " + id);
+        super(HttpStatus.NOT_FOUND, "Pet not found by id " + id);
     }
 
 }

@@ -5,6 +5,8 @@ import com.pet.server.errors.UserNotFoundException;
 import com.pet.server.model.Role;
 import com.pet.server.model.User;
 import com.pet.server.repos.UserRepository;
+import com.pet.server.requests.AuthenticationRequest;
+import com.pet.server.requests.RegisterRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

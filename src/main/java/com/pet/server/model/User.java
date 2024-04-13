@@ -1,5 +1,6 @@
 package com.pet.server.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -7,7 +8,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
-import java.util.Collection;
 import java.util.List;
 
 @Getter
@@ -30,6 +30,7 @@ public class User implements UserDetails {
     @Enumerated
     private Role role;
     @OneToMany(mappedBy = "user")
+    @JsonManagedReference
     private List<Pet> pets;
 
     @Override

@@ -1,31 +1,31 @@
 package com.pet.server.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Builder
 public class Species {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    @Column(unique = true)
     private String name;
     private PetType type;
     private double heightFrom;
     private double heightTo;
     private double weight;
     private int feedingRate;
-    private short furColor;
+    private int furColor;
     private int lifeExpectancy;
+    @OneToMany
+    private List<Illness> illnesses;
 
 }

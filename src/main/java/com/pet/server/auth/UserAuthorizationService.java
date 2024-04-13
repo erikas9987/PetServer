@@ -1,21 +1,27 @@
 package com.pet.server.auth;
 
-import com.pet.server.errors.UserNotFoundException;
 import com.pet.server.model.Role;
 import com.pet.server.model.User;
+import com.pet.server.model.Pet;
+import com.pet.server.repos.PetRepository;
 import com.pet.server.repos.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserAuthorizationService {
 
     private final UserRepository userRepository;
+
+    private final PetRepository petRepository;
 
     private List<? extends GrantedAuthority> getAuthorities() {
         return (List<? extends GrantedAuthority>) SecurityContextHolder
@@ -39,15 +45,45 @@ public class UserAuthorizationService {
 
     public boolean isAuthorizedUser(int id) {
         String authId = getId();
-        User authUser = userRepository.findById(Integer.parseInt(authId))
-                .orElseThrow(() -> new UserNotFoundException(authId));
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
-        return authUser.getEmail().equals(user.getEmail()) || getRole() == Role.Admin;
+        Optional<User> authUser = userRepository.findById(Integer.parseInt(authId));
+        if (authUser.isEmpty()) {
+            return false;
+        }
+        Optional<User> user = userRepository.findById(id);
+        if (user.isEmpty()) {
+            return false;
+        }
+        if (authUser.get().getEmail().equals(user.get().getEmail()) || getRole() == Role.Admin) {
+            return true;
+        } else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to access this resource.");
+        }
+    }
+
+    public boolean isAuthorizedPet(int id) {
+        String authId = getId();
+        Optional<User> user = userRepository.findById(Integer.parseInt(authId));
+        if (user.isEmpty()) {
+            return false;
+        }
+        User author = user.get();
+        Optional<Pet> pet = petRepository.findById(id);
+        if (pet.isEmpty()) {
+            return false;
+        }
+        if (pet.get().getUser().getId() == author.getId()) {
+            return true;
+        } else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to access this resource.");
+        }
     }
 
     public boolean isVet() {
-        return getRole() == Role.Vet || getRole() == Role.Admin;
+        if (getRole() == Role.Vet || getRole() == Role.Admin) {
+            return true;
+        } else {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to access this resource.");
+        }
     }
 
 }
