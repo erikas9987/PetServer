@@ -10,6 +10,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Food {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
