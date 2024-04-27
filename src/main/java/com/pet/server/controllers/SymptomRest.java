@@ -7,6 +7,7 @@ import com.pet.server.repos.IllnessRepository;
 import com.pet.server.repos.SymptomRepository;
 import com.pet.server.requests.CreateSymptomRequest;
 import com.pet.server.requests.GetSymptomRequest;
+import com.pet.server.seeders.SymptomSeeder;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -49,6 +50,13 @@ public class SymptomRest {
                 .build();
         symptomRepository.saveAndFlush(symptom);
         return ResponseEntity.ok(symptom);
+    }
+
+    @PostMapping(value = "/generateSymptoms")
+    public ResponseEntity<List<Symptom>> generateSymptoms() {
+        List<Symptom> symptoms = SymptomSeeder.seedSymptoms();
+        symptomRepository.saveAllAndFlush(symptoms);
+        return ResponseEntity.ok(symptoms);
     }
 
     @PatchMapping(value = "/symptom/{id}")

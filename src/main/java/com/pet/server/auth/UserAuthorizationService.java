@@ -31,16 +31,20 @@ public class UserAuthorizationService {
     }
 
     private String getId() {
-        return getAuthorities().get(0).getAuthority();
+        final String authority = getAuthorities().get(0).getAuthority();
+        System.out.println(authority);
+        return authority;
     }
 
     private Role getRole() {
-        return switch (getAuthorities().get(1).getAuthority()) {
+        final Role role = switch (getAuthorities().get(1).getAuthority()) {
             case "User" -> Role.User;
             case "Vet" -> Role.Vet;
             case "Admin" -> Role.Admin;
             default -> throw new IllegalStateException("Unexpected value: " + getAuthorities().get(1).getAuthority());
         };
+        System.out.println(role);
+        return role;
     }
 
     public boolean isAuthorizedUser(int id) {

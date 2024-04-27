@@ -11,13 +11,13 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Food {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
     private String manufacturer;
     private double weight;
-    @ManyToMany
-    private List<Material> materials;
+
+    @OneToMany(mappedBy = "food")
+    private List<FoodMaterial> foodMaterials;
 }
