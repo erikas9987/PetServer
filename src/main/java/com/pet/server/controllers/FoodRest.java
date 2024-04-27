@@ -3,12 +3,16 @@ package com.pet.server.controllers;
 import com.pet.server.errors.FoodNotFoundException;
 import com.pet.server.model.Food;
 import com.pet.server.model.Material;
+import com.pet.server.model.User;
 import com.pet.server.repos.FoodRepository;
 import com.pet.server.repos.MaterialRepository;
+import com.pet.server.repos.UserRepository;
+import com.pet.server.requests.FoodForUserRequest;
 import com.pet.server.requests.CreateFoodRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +23,9 @@ import java.util.List;
 public class FoodRest {
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private FoodRepository foodRepository;
 
     @Autowired
@@ -27,6 +34,28 @@ public class FoodRest {
     @GetMapping(value = "/foods")
     public ResponseEntity<List<Food>> getAllFoods() {
         return ResponseEntity.ok(foodRepository.findAll());
+    }
+
+    @PostMapping(value = "/food/{id}")
+    @PreAuthorize("@userAuthorizationService.isAuthorizedUser(#id)")
+    public ResponseEntity<User> addFoodForUser(@PathVariable int id, @Valid @RequestBody FoodForUserRequest request) {
+        Food food = foodRepository.findFoodByName(request.getName())
+                .orElseThrow(() -> new FoodNotFoundException(request.getName()));
+        User user = userRepository.getReferenceById(id);
+        user.getFoods().add(food);
+        userRepository.save(user);
+        return ResponseEntity.ok(user);
+    }
+
+    @DeleteMapping(value = "/food/{id}")
+    @PreAuthorize("@userAuthorizationService.isAuthorizedUser(#id)")
+    public ResponseEntity<User> removeFoodForUser(@PathVariable int id, @Valid @RequestBody FoodForUserRequest request) {
+        Food food = foodRepository.findFoodByName(request.getName())
+                .orElseThrow(() -> new FoodNotFoundException(request.getName()));
+        User user = userRepository.getReferenceById(id);
+        user.getFoods().remove(food);
+        userRepository.save(user);
+        return ResponseEntity.ok(user);
     }
 
     @PostMapping(value = "/food")
