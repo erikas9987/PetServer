@@ -9,4 +9,7 @@ public class SymptomNotFoundException extends ResponseStatusException {
         super(HttpStatus.NOT_FOUND, "Symptom not found with id " + id);
     }
 
+    public SymptomNotFoundException(String name) {
+        super(HttpStatus.NOT_FOUND, "Symptom not found with name " + name);
+    }
 }
