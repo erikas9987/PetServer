@@ -1,6 +1,7 @@
 package com.pet.server.auth;
 
 import com.pet.server.config.JwtService;
+import com.pet.server.errors.UserAlreadyExistsException;
 import com.pet.server.errors.UserNotFoundException;
 import com.pet.server.model.Role;
 import com.pet.server.model.User;
@@ -13,6 +14,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -23,6 +26,11 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public AuthenticationResponse register(RegisterRequest request) {
+
+        Optional<User> getExisting = userRepository.findByEmail(request.getEmail());
+        if (getExisting.isPresent()) {
+            throw new UserAlreadyExistsException(request.getEmail());
+        }
         var user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -31,6 +39,7 @@ public class AuthenticationService {
                 .birthDate(request.getBirthDate())
                 .role(Role.User)
                 .build();
+
         userRepository.save(user);
         var jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse.builder().token(jwtToken).build();
@@ -38,7 +47,7 @@ public class AuthenticationService {
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         var user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException(request.getEmail()));
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         user.getId(),

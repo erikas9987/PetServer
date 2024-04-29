@@ -38,7 +38,7 @@ public class SymptomRest {
     @GetMapping(value = "/symptom")
     public ResponseEntity<Symptom> getSymptomByName(@Valid @RequestBody GetSymptomRequest request) {
         Symptom symptom = symptomRepository.findByName(request.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new SymptomNotFoundException(request.getName()));
         return ResponseEntity.ok(symptom);
     }
 
