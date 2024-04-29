@@ -61,6 +61,7 @@ public class MaterialRest {
         return ResponseEntity.ok(material);
     }
 
+    /*
     @DeleteMapping(value = "/material/{id}")
     public ResponseEntity<Material> deleteMaterial(@PathVariable int id) {
         Material material = materialRepository.findById(id)
@@ -75,5 +76,5 @@ public class MaterialRest {
         materialRepository.delete(material);
         return ResponseEntity.ok(material);
     }
-
+*/
 }
