@@ -17,7 +17,6 @@ public class Material {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
-    private int quantity;
     @ManyToMany
     private List<Food> foods;
 }

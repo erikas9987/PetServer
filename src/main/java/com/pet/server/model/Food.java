@@ -19,6 +19,6 @@ public class Food {
     private String manufacturer;
     private double weight;
 
-    @OneToMany(mappedBy = "food")
+    @OneToMany(mappedBy = "food", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FoodMaterial> foodMaterials;
 }

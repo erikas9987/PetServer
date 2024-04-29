@@ -58,7 +58,7 @@ public class FoodRest {
         return ResponseEntity.ok(user);
     }
 
-    @PostMapping(value = "/food")
+/*    @PostMapping(value = "/food")
     @Validated
     public ResponseEntity<Food> createFood(@Valid @RequestBody CreateFoodRequest request) {
         List<Material> materials = materialRepository.findAllByNameIn(request.getMaterials());
@@ -100,4 +100,6 @@ public class FoodRest {
         foodRepository.delete(food);
         return ResponseEntity.ok(food);
     }
+    */
+
 }
