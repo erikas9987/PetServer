@@ -9,6 +9,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -16,9 +18,16 @@ import java.util.List;
 public class CreateFoodRequest {
 
     @NotBlank(message = "Please specify the name of the food!")
-    private String name, manufacturer;
+    private String name;
+
+    @NotBlank(message = "Please specify the manufacturer of the food!")
+    private String manufacturer;
+
+    @NotNull(message = "Please specify the weight of the food!")
     private double weight;
+
     @NotNull(message = "Please specify materials of the food. Define an empty array if there are none.")
-    private List<String> materials;
+    private List<MaterialQuantity> materials;
 
 }
+
