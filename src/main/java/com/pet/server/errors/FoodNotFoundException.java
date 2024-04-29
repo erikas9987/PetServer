@@ -9,4 +9,7 @@ public class FoodNotFoundException extends ResponseStatusException {
         super(HttpStatus.NOT_FOUND, "Food not found by id " + id);
     }
 
+    public FoodNotFoundException(String name) {
+        super(HttpStatus.NOT_FOUND, "Food not found by name " + name);
+    }
 }

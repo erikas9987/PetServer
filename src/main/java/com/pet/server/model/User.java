@@ -32,6 +32,8 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user")
     @JsonManagedReference
     private List<Pet> pets;
+    @OneToMany
+    private List<Food> foods;
 
     @Override
     public List<? extends GrantedAuthority> getAuthorities() {
