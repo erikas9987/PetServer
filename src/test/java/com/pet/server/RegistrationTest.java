@@ -8,6 +8,8 @@ import com.pet.server.requests.RegisterRequest;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.cucumber.spring.CucumberContextConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.util.Optional;
@@ -16,6 +18,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
+@CucumberContextConfiguration
+@SpringBootTest
 public class RegistrationTest {
     @MockBean
     private UserRepository userRepository;
