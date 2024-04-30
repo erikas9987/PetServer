@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 
 @CucumberContextConfiguration
 @SpringBootTest
-public class RegistrationTest {
+public class RegistrationSteps {
     @MockBean
     private UserRepository userRepository;
 
