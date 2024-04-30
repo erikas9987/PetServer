@@ -39,6 +39,7 @@ public class MaterialRest {
         return ResponseEntity.ok(material);
     }
 
+    /*
     @PostMapping(value = "/material")
     public ResponseEntity<Material> createMaterial(@Valid @RequestBody CreateMaterialRequest request) {
         Material material = Material.builder()
@@ -60,8 +61,6 @@ public class MaterialRest {
         materialRepository.saveAndFlush(material);
         return ResponseEntity.ok(material);
     }
-
-    /*
     @DeleteMapping(value = "/material/{id}")
     public ResponseEntity<Material> deleteMaterial(@PathVariable int id) {
         Material material = materialRepository.findById(id)
