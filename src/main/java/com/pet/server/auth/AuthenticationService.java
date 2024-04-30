@@ -61,4 +61,8 @@ public class AuthenticationService {
     public boolean userExists(String email) {
         return userRepository.findByEmail(email).isPresent();
     }
+
+    public boolean isLoggedIn(String email) {
+        return true;
+    }
 }
