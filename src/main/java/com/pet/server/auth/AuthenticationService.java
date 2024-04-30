@@ -58,4 +58,7 @@ public class AuthenticationService {
         return AuthenticationResponse.builder().token(jwtToken).build();
     }
 
+    public boolean userExists(String email) {
+        return userRepository.findByEmail(email).isPresent();
+    }
 }
