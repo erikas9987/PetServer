@@ -8,6 +8,7 @@ import com.pet.server.repos.SymptomRepository;
 import com.pet.server.requests.CreateIllnessRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -19,55 +20,66 @@ import java.util.List;
 @PreAuthorize("@userAuthorizationService.isVet()")
 public class IllnessRest {
 
-    @Autowired
-    private IllnessRepository illnessRepository;
+    private final IllnessRepository illnessRepository;
+    private final SymptomRepository symptomRepository;
 
-    @Autowired
-    private SymptomRepository symptomRepository;
-
-    @GetMapping(value = "/illnesses")
-    public ResponseEntity<List<Illness>> getAllIllnesses() {
-        return ResponseEntity.ok(illnessRepository.findAll());
+    public IllnessRest(IllnessRepository illnessRepository, SymptomRepository symptomRepository) {
+        this.illnessRepository = illnessRepository;
+        this.symptomRepository = symptomRepository;
     }
 
-    @PostMapping(value = "/illness")
+    @GetMapping("/illnesses")
+    public List<Illness> getAllIllnesses() {
+        return illnessRepository.findAll();
+    }
+
+    @PostMapping("/illness")
     @Validated
-    public ResponseEntity<Illness> createIllness(@Valid @RequestBody CreateIllnessRequest request) {
+    public Illness createIllness(@Valid @RequestBody CreateIllnessRequest request) {
+        Illness illness = buildIllnessFromRequest(request);
+        illnessRepository.saveAndFlush(illness);
+        return illness;
+    }
+
+    @PatchMapping("/illness/{id}")
+    @Validated
+    public Illness updateIllness(@PathVariable int id, @Valid @RequestBody CreateIllnessRequest request) {
+        Illness illness = illnessRepository.findById(id)
+                .orElseThrow(() -> new IllnessNotFoundException(id));
+        updateIllnessFromRequest(illness, request);
+        illnessRepository.saveAndFlush(illness);
+        return illness;
+    }
+
+    @DeleteMapping("/illness/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public void deleteIllness(@PathVariable int id) {
+        Illness illness = illnessRepository.findById(id)
+                .orElseThrow(() -> new IllnessNotFoundException(id));
+        clearIllnessSymptoms(illness);
+        illnessRepository.delete(illness);
+    }
+
+    private Illness buildIllnessFromRequest(CreateIllnessRequest request) {
         List<Symptom> symptoms = symptomRepository.findAllByNameIn(request.getSymptoms());
-        Illness illness = Illness.builder()
+        return Illness.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .symptoms(symptoms)
                 .build();
-        illnessRepository.saveAndFlush(illness);
-        return ResponseEntity.ok(illness);
     }
 
-    @PatchMapping(value = "/illness/{id}")
-    @Validated
-    public ResponseEntity<Illness> updateIllness(@PathVariable int id, @Valid @RequestBody CreateIllnessRequest request) {
+    private void updateIllnessFromRequest(Illness illness, CreateIllnessRequest request) {
         List<Symptom> symptoms = symptomRepository.findAllByNameIn(request.getSymptoms());
-        Illness illness = illnessRepository.findById(id)
-                .orElseThrow(() -> new IllnessNotFoundException(id));
         illness.setName(request.getName());
         illness.setDescription(request.getDescription());
         illness.setSymptoms(symptoms);
-        illnessRepository.saveAndFlush(illness);
-        return ResponseEntity.ok(illness);
     }
 
-    @DeleteMapping(value = "/illness/{id}")
-    public ResponseEntity<Illness> deleteIllness(@PathVariable int id) {
-        Illness illness = illnessRepository.findById(id)
-                .orElseThrow(() -> new IllnessNotFoundException(id));
+    private void clearIllnessSymptoms(Illness illness) {
         List<Symptom> symptoms = symptomRepository.findAllByIllnessesContaining(illness);
-        for (Symptom symptom : symptoms) {
-            symptom.getIllnesses().remove(illness);
-        }
-        illness.getSymptoms().clear();
+        symptoms.forEach(symptom -> symptom.getIllnesses().remove(illness));
         symptomRepository.saveAll(symptoms);
-        illnessRepository.save(illness);
-        illnessRepository.delete(illness);
-        return ResponseEntity.ok(illness);
+        illness.getSymptoms().clear();
     }
 }
