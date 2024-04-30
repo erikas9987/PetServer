@@ -11,107 +11,99 @@ import com.pet.server.repos.SpeciesRepository;
 import com.pet.server.repos.UserRepository;
 import com.pet.server.requests.PetRequest;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @Validated
+@RequestMapping("/pets")
 public class PetRest {
 
-    @Autowired
-    private PetRepository petRepository;
+    private final PetRepository petRepository;
+    private final UserRepository userRepository;
+    private final SpeciesRepository speciesRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    public PetRest(PetRepository petRepository, UserRepository userRepository, SpeciesRepository speciesRepository) {
+        this.petRepository = petRepository;
+        this.userRepository = userRepository;
+        this.speciesRepository = speciesRepository;
+    }
 
-    @Autowired
-    private SpeciesRepository speciesRepository;
-
-    @GetMapping(value = "/pets")
-    public ResponseEntity<?> getAllPets() {
+    @GetMapping
+    public List<Pet> getAllPets() {
         List<Pet> pets = petRepository.findAll();
         if (pets.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } else {
-            return new ResponseEntity<>(pets, HttpStatus.OK);
+            throw new PetNotFoundException(0);
         }
+        return pets;
     }
 
-    @GetMapping(value = "/pet/{id}")
-    public ResponseEntity<?> getPetById(@PathVariable int id) {
-        Optional<Pet> optionalPet = petRepository.findById(id);
-        if (optionalPet.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-        return new ResponseEntity<>(optionalPet.get(), HttpStatus.OK);
+    @GetMapping("/{id}")
+    public Pet getPetById(@PathVariable int id) {
+        return petRepository.findById(id).orElseThrow(() -> new PetNotFoundException(id));
     }
 
-    @GetMapping(value = "/pets/{userId}")
+    @GetMapping("/user/{userId}")
     @PreAuthorize("@userAuthorizationService.isAuthorizedUser(#userId)")
-    public ResponseEntity<?> getPetsByUser(@PathVariable int userId) {
+    public List<Pet> getPetsByUser(@PathVariable int userId) {
         List<Pet> pets = petRepository.findAllByUserId(userId);
         if (pets.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } else {
-            return new ResponseEntity<>(pets, HttpStatus.OK);
+            throw new PetNotFoundException(userId);
         }
+        return pets;
     }
 
-    @PostMapping(value = "/pet/{userId}")
+    @PostMapping("/user/{userId}")
     @PreAuthorize("@userAuthorizationService.isAuthorizedUser(#userId)")
-    public ResponseEntity<Pet> createPetForUser(@PathVariable int userId, @Valid @RequestBody PetRequest pet) {
-        Species species = speciesRepository.findByName(pet.getSpecies())
-                .orElseThrow(() -> new SpeciesNotFoundException(pet.getSpecies()));
-        Pet newPet = Pet.builder()
-                .user(userRepository.getReferenceById(userId))
-                .gender(pet.getGender())
-                .name(pet.getName())
-                .height(pet.getHeight())
-                .weight(pet.getWeight())
-                .birthDate(pet.getBirthDate())
+    public Pet createPetForUser(@PathVariable int userId, @Valid @RequestBody PetRequest petRequest) {
+        Species species = speciesRepository.findByName(petRequest.getSpecies())
+                .orElseThrow(() -> new SpeciesNotFoundException(petRequest.getSpecies()));
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+        Pet newPet = buildPet(petRequest, species, user);
+        return petRepository.save(newPet);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("@userAuthorizationService.isAuthorizedPet(#id)")
+    public Pet updatePet(@PathVariable int id, @Valid @RequestBody PetRequest petRequest) {
+        Pet pet = petRepository.findById(id).orElseThrow(() -> new PetNotFoundException(id));
+        updatePetFromRequest(pet, petRequest);
+        return petRepository.save(pet);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("@userAuthorizationService.isAuthorizedPet(#id)")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePet(@PathVariable int id) {
+        Pet pet = petRepository.findById(id).orElseThrow(() -> new PetNotFoundException(id));
+        pet.setUser(null);
+        petRepository.delete(pet);
+    }
+
+    private Pet buildPet(PetRequest petRequest, Species species, User user) {
+        return Pet.builder()
+                .user(user)
+                .gender(petRequest.getGender())
+                .name(petRequest.getName())
+                .height(petRequest.getHeight())
+                .weight(petRequest.getWeight())
+                .birthDate(petRequest.getBirthDate())
                 .species(species)
                 .build();
-        petRepository.saveAndFlush(newPet);
-        return ResponseEntity.ok(newPet);
     }
 
-    @PutMapping(value = "/pet/{id}")
-    @PreAuthorize("@userAuthorizationService.isAuthorizedPet(#id)")
-    public ResponseEntity<Pet> updatePet(@PathVariable int id, @Valid @RequestBody PetRequest request) {
-        Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException(id));
-        Species species = speciesRepository.findByName(request.getSpecies())
-                .orElseThrow(() -> new SpeciesNotFoundException(request.getSpecies()));
-        pet.setName(request.getName());
-        pet.setSpecies(species);
-        pet.setHeight(request.getHeight());
-        pet.setWeight(request.getWeight());
-        pet.setGender(request.getGender());
-        pet.setBirthDate(request.getBirthDate());
-        petRepository.saveAndFlush(pet);
-        return ResponseEntity.ok(pet);
+    private void updatePetFromRequest(Pet pet, PetRequest petRequest) {
+        pet.setName(petRequest.getName());
+        pet.setSpecies(speciesRepository.findByName(petRequest.getSpecies())
+                .orElseThrow(() -> new SpeciesNotFoundException(petRequest.getSpecies())));
+        pet.setHeight(petRequest.getHeight());
+        pet.setWeight(petRequest.getWeight());
+        pet.setGender(petRequest.getGender());
+        pet.setBirthDate(petRequest.getBirthDate());
     }
-
-    @DeleteMapping(value = "/pet/{id}")
-    @PreAuthorize("@userAuthorizationService.isAuthorizedPet(#id)")
-    public ResponseEntity<Pet> deletePet(@PathVariable int id) {
-        Pet pet = petRepository.findById(id)
-                .orElseThrow(() -> new PetNotFoundException(id));
-        User user = userRepository.findById(pet.getUser().getId())
-                .orElseThrow(() -> new UserNotFoundException(pet.getUser().getId()));
-        user.getPets().remove(pet);
-        pet.setUser(null);
-        userRepository.save(user);
-        petRepository.save(pet);
-        petRepository.delete(pet);
-        return ResponseEntity.ok(pet);
-    }
-
 }
+
