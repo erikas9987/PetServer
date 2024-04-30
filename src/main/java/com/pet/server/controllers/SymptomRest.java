@@ -9,79 +9,90 @@ import com.pet.server.requests.CreateSymptomRequest;
 import com.pet.server.requests.GetSymptomRequest;
 import com.pet.server.seeders.SymptomSeeder;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @RestController
 @PreAuthorize("@userAuthorizationService.isVet()")
 @Validated
+@RequestMapping("/symptoms")
 public class SymptomRest {
 
-    @Autowired
-    private SymptomRepository symptomRepository;
+    private final SymptomRepository symptomRepository;
+    private final IllnessRepository illnessRepository;
 
-    @Autowired
-    private IllnessRepository illnessRepository;
-
-    @GetMapping(value = "/symptoms")
-    public ResponseEntity<List<Symptom>> getAllSymptoms() {
-        return ResponseEntity.ok(symptomRepository.findAll());
+    public SymptomRest(SymptomRepository symptomRepository, IllnessRepository illnessRepository) {
+        this.symptomRepository = symptomRepository;
+        this.illnessRepository = illnessRepository;
     }
 
-    @GetMapping(value = "/symptom")
-    public ResponseEntity<Symptom> getSymptomByName(@Valid @RequestBody GetSymptomRequest request) {
-        Symptom symptom = symptomRepository.findByName(request.getName())
+    @GetMapping
+    public List<Symptom> getAllSymptoms() {
+        return symptomRepository.findAll();
+    }
+
+    @GetMapping("/detail")
+    public Symptom getSymptomByName(@Valid @RequestBody GetSymptomRequest request) {
+        return symptomRepository.findByName(request.getName())
                 .orElseThrow(() -> new SymptomNotFoundException(request.getName()));
-        return ResponseEntity.ok(symptom);
     }
 
-    @PostMapping(value = "/symptom")
-    public ResponseEntity<Symptom> createSymptom(@Valid @RequestBody CreateSymptomRequest request) {
-        Symptom symptom = Symptom.builder()
-                .name(request.getName())
-                .illnesses(illnessRepository.findAllByNameIn(request.getIllnesses()))
-                .build();
+    @PostMapping
+    public Symptom createSymptom(@Valid @RequestBody CreateSymptomRequest request) {
+        Symptom symptom = buildSymptomFromRequest(request);
         symptomRepository.saveAndFlush(symptom);
-        return ResponseEntity.ok(symptom);
+        return symptom;
     }
 
-    @PostMapping(value = "/generateSymptoms")
-    public ResponseEntity<List<Symptom>> generateSymptoms() {
+    @PostMapping("/generate")
+    public List<Symptom> generateSymptoms() {
         List<Symptom> symptoms = SymptomSeeder.seedSymptoms();
         symptomRepository.saveAllAndFlush(symptoms);
-        return ResponseEntity.ok(symptoms);
+        return symptoms;
     }
 
-    @PatchMapping(value = "/symptom/{id}")
-    public ResponseEntity<Symptom> updateSymptom(@PathVariable int id, @Valid @RequestBody CreateSymptomRequest request) {
+    @PatchMapping("/{id}")
+    public Symptom updateSymptom(@PathVariable int id, @Valid @RequestBody CreateSymptomRequest request) {
         Symptom symptom = symptomRepository.findById(id)
                 .orElseThrow(() -> new SymptomNotFoundException(id));
-        symptom.setName(request.getName());
-        symptom.setIllnesses(illnessRepository.findAllByNameIn(request.getIllnesses()));
+        updateSymptomFromRequest(symptom, request);
         symptomRepository.saveAndFlush(symptom);
-        return ResponseEntity.ok(symptom);
+        return symptom;
     }
 
-    @DeleteMapping(value = "/symptom/{id}")
-    public ResponseEntity<Symptom> deleteSymptom(@PathVariable int id) {
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public void deleteSymptom(@PathVariable int id) {
         Symptom symptom = symptomRepository.findById(id)
                 .orElseThrow(() -> new SymptomNotFoundException(id));
-        List<Illness> illnesses = illnessRepository.findAllBySymptomsContaining(symptom);
-        for (Illness illness : illnesses) {
-            illness.getSymptoms().remove(symptom);
-        }
-        symptom.getIllnesses().clear();
-        illnessRepository.saveAll(illnesses);
-        symptomRepository.save(symptom);
+        clearSymptomIllnesses(symptom);
         symptomRepository.delete(symptom);
-        return ResponseEntity.ok(symptom);
+    }
+
+    private Symptom buildSymptomFromRequest(CreateSymptomRequest request) {
+        List<Illness> illnesses = illnessRepository.findAllByNameIn(request.getIllnesses());
+        return Symptom.builder()
+                .name(request.getName())
+                .illnesses(illnesses)
+                .build();
+    }
+
+    private void updateSymptomFromRequest(Symptom symptom, CreateSymptomRequest request) {
+        List<Illness> illnesses = illnessRepository.findAllByNameIn(request.getIllnesses());
+        symptom.setName(request.getName());
+        symptom.setIllnesses(illnesses);
+    }
+
+    private void clearSymptomIllnesses(Symptom symptom) {
+        List<Illness> illnesses = illnessRepository.findAllBySymptomsContaining(symptom);
+        illnesses.forEach(illness -> illness.getSymptoms().remove(symptom));
+        illnessRepository.saveAll(illnesses);
+        symptom.getIllnesses().clear();
     }
 
 }
+
