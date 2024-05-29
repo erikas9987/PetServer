@@ -50,6 +50,7 @@ public class SpeciesRest {
                 .heightTo(species.getHeightTo())
                 .illnesses(illnesses)
                 .lifeExpectancy(species.getLifeExpectancy())
+                .weight(species.getWeight())
                 .build();
         speciesRepository.saveAndFlush(newSpecies);
         return ResponseEntity.ok(newSpecies);
@@ -70,6 +71,7 @@ public class SpeciesRest {
         species.setHeightTo(request.getHeightTo());
         species.setIllnesses(illnesses);
         species.setLifeExpectancy(request.getLifeExpectancy());
+        species.setWeight(request.getWeight());
         speciesRepository.saveAndFlush(species);
         return ResponseEntity.ok(species);
     }

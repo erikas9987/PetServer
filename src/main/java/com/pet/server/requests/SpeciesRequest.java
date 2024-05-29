@@ -22,7 +22,7 @@ public class SpeciesRequest {
 
     @NotBlank(message = "Please specify the pet type!")
     @ValidEnum(enumClass = PetType.class)
-    private PetType type;
+    private String type;
 
     @NotNull(message = "Please specify the minimum height of species!")
     @Positive(message = "Minimum height of species cannot be 0 or less!")
@@ -51,4 +51,8 @@ public class SpeciesRequest {
 
     @NotNull(message = "Please specify the illnesses of species. Define an empty array if there are none.")
     private List<String> illnesses;
+
+    public PetType getType() {
+        return PetType.valueOf(type);
+    }
 }

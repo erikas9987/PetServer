@@ -16,7 +16,9 @@ import java.util.List;
 public class CreateIllnessRequest {
 
     @NotBlank(message = "Please specify the name of your illness!")
-    private String name, description;
+    private String name;
+    @NotBlank(message = "Please specify the description of your illness!")
+    private String description;
     @NotNull(message = "Please specify symptoms of your illness. Define an empty array if there are none.")
     private List<String> symptoms;
 

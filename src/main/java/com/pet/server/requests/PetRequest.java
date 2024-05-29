@@ -27,7 +27,7 @@ public class PetRequest {
 
     @NotBlank(message = "Please specify your pet's gender!")
     @ValidEnum(enumClass = Gender.class)
-    private Gender gender;
+    private String gender;
 
     @NotNull(message = "Please specify your pet's birth date!")
     @PastOrPresent(message = "Pet cannot be born later than it is being added")
@@ -40,5 +40,9 @@ public class PetRequest {
     @NotNull(message = "Please specify your pet's weight!")
     @Positive(message = "Your pet's weight cannot be 0 or less!")
     private double weight;
+
+    public Gender getGender() {
+        return Gender.valueOf(gender);
+    }
 
 }
